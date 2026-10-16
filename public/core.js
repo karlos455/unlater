@@ -42,12 +42,12 @@ export function validateState(value) {
   const ids = new Set();
   const validId = id => typeof id === 'string' && /^[a-zA-Z0-9-]{1,80}$/.test(id);
   for (const a of value.activities) {
-    if (!validId(a.id) || ids.has(a.id) || !str(a.title,100) || !a.title.trim() || !str(a.description,2000) || !Object.hasOwn(categories,a.category) || !Number.isInteger(a.minutes) || a.minutes < 1 || a.minutes > 600 || ![1,2,3].includes(a.effort) || !date(a.createdAt) || !date(a.postponedSince) || (a.completedAt && !date(a.completedAt)) || !photo(a.photo) || !Array.isArray(a.steps) || a.steps.length > 12 || !a.steps.every(s=>str(s,160))) throw new Error('O backup contém uma atividade inválida.');
+    if (!validId(a.id) || ids.has(a.id) || !str(a.title,100) || !a.title.trim() || !str(a.description,2000) || !Object.hasOwn(categories,a.category) || !Number.isInteger(a.minutes) || a.minutes < 1 || a.minutes > 600 || ![1,2,3].includes(a.effort) || !date(a.createdAt) || !(a.postponedSince == null || date(a.postponedSince)) || (a.completedAt && !date(a.completedAt)) || !photo(a.photo) || !Array.isArray(a.steps) || a.steps.length > 12 || !a.steps.every(s=>str(s,160))) throw new Error('O backup contém uma atividade inválida.');
     ids.add(a.id);
   }
   const historyIds = new Set();
   for (const h of value.history) {
-    if (!validId(h.id) || historyIds.has(h.id) || !ids.has(h.activityId) || !str(h.title,100) || !Object.hasOwn(categories,h.category) || !date(h.at) || !/^\d{4}-\d{2}-\d{2}$/.test(h.localDay) || !Number.isFinite(h.elapsedMs) || h.elapsedMs < 0 || h.elapsedMs > 31536000000 || ![1,2,3,4].includes(h.mood) || typeof h.done !== 'boolean' || !['full','five'].includes(h.mode) || !photo(h.photo) || !photo(h.afterPhoto || '') || !str(h.note || '',1000) || !date(h.postponedSince)) throw new Error('O backup contém um registo inválido.');
+    if (!validId(h.id) || historyIds.has(h.id) || !ids.has(h.activityId) || !str(h.title,100) || !Object.hasOwn(categories,h.category) || !date(h.at) || !/^\d{4}-\d{2}-\d{2}$/.test(h.localDay) || !Number.isFinite(h.elapsedMs) || h.elapsedMs < 0 || h.elapsedMs > 31536000000 || ![1,2,3,4].includes(h.mood) || typeof h.done !== 'boolean' || !['full','five'].includes(h.mode) || !photo(h.photo) || !photo(h.afterPhoto || '') || !str(h.note || '',1000) || !(h.postponedSince == null || date(h.postponedSince))) throw new Error('O backup contém um registo inválido.');
     historyIds.add(h.id);
   }
   if (value.mission != null) {

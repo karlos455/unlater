@@ -42,7 +42,7 @@ export function validateState(value) {
   const ids = new Set();
   const validId = id => typeof id === 'string' && /^[a-zA-Z0-9-]{1,80}$/.test(id);
   for (const a of value.activities) {
-    if (!validId(a.id) || ids.has(a.id) || !str(a.title,100) || !a.title.trim() || !str(a.description,2000) || !Object.hasOwn(categories,a.category) || !Number.isInteger(a.minutes) || a.minutes < 1 || a.minutes > 600 || ![1,2,3].includes(a.effort) || !date(a.createdAt) || !(a.postponedSince == null || date(a.postponedSince)) || (a.completedAt && !date(a.completedAt)) || !photo(a.photo) || !Array.isArray(a.steps) || a.steps.length > 12 || !a.steps.every(s=>str(s,160))) throw new Error('O backup contém uma atividade inválida.');
+    if (!validId(a.id) || ids.has(a.id) || !str(a.title,100) || !a.title.trim() || !str(a.description,2000) || !Object.hasOwn(categories,a.category) || !Number.isInteger(a.minutes) || a.minutes < 1 || a.minutes > 600 || ![1,2,3].includes(a.effort) || !date(a.createdAt) || !(a.postponedSince == null || date(a.postponedSince)) || (a.procrastinated != null && typeof a.procrastinated !== 'boolean') || (a.completedAt && !date(a.completedAt)) || !photo(a.photo) || !Array.isArray(a.steps) || a.steps.length > 12 || !a.steps.every(s=>str(s,160))) throw new Error('O backup contém uma atividade inválida.');
     ids.add(a.id);
   }
   const historyIds = new Set();
@@ -54,7 +54,7 @@ export function validateState(value) {
     const m=value.mission; const a=value.activities.find(a=>a.id===m.activityId);
     if (!a || a.completedAt || !['drawn','running'].includes(m.status) || !['full','five'].includes(m.mode) || !Number.isFinite(m.elapsedMs) || m.elapsedMs < 0 || (m.runningSince != null && (!Number.isFinite(m.runningSince) || m.runningSince < 0)) || !Array.isArray(m.checked) || !m.checked.every(i=>Number.isInteger(i) && i>=0 && i<a.steps.length)) throw new Error('O backup contém uma missão inválida.');
   }
-  return { version:1, activities:value.activities, history:value.history, mission:value.mission || null, onboarding:!!value.onboarding };
+  return { version:1, activities:value.activities.map(a=>({...a,procrastinated:a.procrastinated??!!a.postponedSince})), history:value.history, mission:value.mission || null, onboarding:!!value.onboarding };
 }
 export function achievements(history) {
   const done=history.filter(h=>h.done), unique=new Set(history.map(h=>h.localDay)).size;

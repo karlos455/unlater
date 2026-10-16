@@ -1,0 +1,8 @@
+{
+  "name": "unlater",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "node server.mjs", "test": "node --test", "check": "node --check public/app.js && node --check public/core.js && node --check public/sw.js" },
+  "engines": { "node": ">=22" }
+}

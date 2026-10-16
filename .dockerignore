@@ -1,0 +1,7 @@
+tests
+node_modules
+*.zip
+.git
+README.md
+PLAN.md
+ASSETS.md

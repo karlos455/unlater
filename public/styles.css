@@ -25,6 +25,7 @@
 .history-delete{color:#a88794;width:30px;height:30px;margin-left:auto;flex-shrink:0}.history-delete:hover{background:#fde5e9;color:#c44}
 .energy-options{margin-top:19px}.dice:hover{transform:rotate(-13deg) scale(1.04);filter:saturate(1.08)}.dice:active{transform:rotate(-13deg) scale(.97)}
 label[hidden]{display:none!important}
+.sync-status{font-size:11px;color:#827088;background:#f5eef8;border-radius:10px;padding:9px 11px}
 .view{animation:none}
 .header-spacer{flex:1}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

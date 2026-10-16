@@ -10,7 +10,7 @@ Copiar esta pasta inteira para o Unraid, por exemplo `/mnt/user/appdata/unlater/
 docker compose up -d --build --wait
 ```
 
-A aplicação fica disponível em `http://IP-DO-UNRAID:8088`. A porta é configurável com a variável `UNLATER_PORT` (por omissão 8088). O contentor usa a porta interna 8080, filesystem de leitura, tmpfs para diretórios temporários, healthcheck e rotação de logs.
+A aplicação fica disponível em `http://IP-DO-UNRAID:8088`. A porta é configurável com a variável `UNLATER_PORT` (por omissão 8088). A interface web e a API de sincronização correm em contentores separados; o API só é acessível pela rede Docker e o contentor web encaminha os pedidos. Os dois contentores têm healthcheck e rotação de logs.
 
 ```sh
 docker compose ps
@@ -26,16 +26,16 @@ Para instalar e usar offline a partir da rede, colocar a aplicação atrás do r
 
 HTTP num IP LAN permite abrir a app, mas não ativa o service worker nem a instalação PWA completa. `http://localhost:8088` é a exceção de desenvolvimento. Requisitos confirmados na [documentação MDN sobre instalação PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable) e [service workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API).
 
-Depois da primeira abertura online em HTTPS, o shell e os assets ficam disponíveis offline. As atividades e o cronómetro continuam locais. Em iOS, usar Partilhar → Adicionar ao ecrã principal; em Chromium, usar a opção de instalação do browser quando disponível.
+Depois da primeira abertura online em HTTPS, o shell e os assets ficam disponíveis offline. As alterações feitas sem ligação ficam em fila local e sincronizam quando a ligação regressar. Em iOS, usar Partilhar → Adicionar ao ecrã principal; em Chromium, usar a opção de instalação do browser quando disponível.
 
 ## Onde ficam os dados
 
-**IndexedDB no browser/dispositivo**, com fotografias e histórico. O contentor serve ficheiros estáticos e não contém dados pessoais; não precisa de volumes persistentes. Um volume Docker não faz backup dos dados do browser.
+**O estado principal fica no servidor da rede local**, em `./data/state.json`, com revisão optimista, escrita atómica e volume persistente. O browser mantém uma cópia IndexedDB e sincroniza automaticamente ao abrir e enquanto está activo. A primeira ligação de cada dispositivo combina os dados locais antigos com os dados existentes no servidor; depois disso, o servidor é a fonte comum. Para sincronizar, abre sempre o mesmo endereço nos dispositivos (por exemplo `http://192.168.1.200:8088`).
 
 - Usar **Mais → Exportar os meus dados** para um JSON que inclui imagens e missão em curso.
 - Importar noutro dispositivo ou para recuperar. O backup é validado e a substituição exige confirmação.
-- Browser, perfil, protocolo, domínio e porta diferentes têm armazenamento diferente. Exportar antes de mudar o endereço da app, limpar dados do browser ou trocar de dispositivo.
-- Nesta fase não há sincronização multi-dispositivo nem conflitos entre abas. Usar uma aba por dispositivo.
+- Os dados do servidor persistem a reinícios do container. A cópia IndexedDB é específica de cada browser/dispositivo; o servidor não deve ser apagado. A sincronização está limitada à rede local e não tem autenticação: não encaminhar a porta da app para a Internet.
+- Alterações simultâneas são combinadas por registo; se dois dispositivos editarem o mesmo registo ao mesmo tempo, prevalece a última gravação sincronizada.
 - Não há contas, notificações, tracking, fontes externas, bibliotecas de terceiros em runtime ou sugestões externas.
 - A demonstração é opcional e só existe em memória. Sair ou recarregar regressa aos dados reais.
 
@@ -61,10 +61,11 @@ Os oito ecrãs e decisões estão em [PLAN.md](PLAN.md). A origem e prompts dos 
 public/            App estática e PWA
   app.js           Interface, fluxos e ações
   core.js          Regras testáveis
-  storage.js       IndexedDB
+  storage.js       Cache IndexedDB e sincronização HTTP
   sw.js            Cache offline
 tests/             Testes Node nativos
 compose.yaml       Stack para Docker/Unraid
-Dockerfile         Nginx Alpine
-nginx.conf         Servidor e headers
+Dockerfile         Nginx Alpine / proxy da API
+Dockerfile.api     API Node e persistência JSON
+nginx.conf         Servidor, proxy e headers
 ```

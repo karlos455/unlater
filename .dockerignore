@@ -1,6 +1,7 @@
 tests
 node_modules
 *.zip
+/data
 .git
 README.md
 PLAN.md

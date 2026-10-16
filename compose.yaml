@@ -1,7 +1,40 @@
 services:
+  unlater-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: unlater-api:local
+    expose:
+      - "4173"
+    volumes:
+      - ./data:/data
+    environment:
+      DATA_DIR: /data
+      PORT: 4173
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4173/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
   unlater:
     build: .
     image: unlater:local
+    depends_on:
+      unlater-api:
+        condition: service_healthy
     ports:
       - "${UNLATER_PORT:-8088}:8080"
     restart: unless-stopped

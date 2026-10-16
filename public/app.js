@@ -108,4 +108,22 @@ async function syncFromOtherDevices(){if(!storageReady||busy||demo||document.vis
 setInterval(syncFromOtherDevices,5000);
 window.addEventListener('focus',syncFromOtherDevices);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncFromOtherDevices();});
-if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('/sw.js').catch(()=>toast('O modo offline não ficou disponível. Podes continuar a usar a app.'));
+let publishedAssetFingerprint='', updateCheckRunning=false;
+async function checkForAppUpdate(){
+  if(updateCheckRunning||document.visibilityState==='hidden')return;
+  updateCheckRunning=true;
+  try{
+    const paths=['/index.html','/app.js','/styles.css','/core.js','/storage.js'];
+    const parts=await Promise.all(paths.map(async path=>{const response=await fetch(path,{method:'HEAD',cache:'no-store'});if(!response.ok)throw Error('Asset indisponível');return `${path}:${response.headers.get('etag')||response.headers.get('last-modified')||response.headers.get('content-length')||''}`;}));
+    const fingerprint=parts.join('|');
+    if(!publishedAssetFingerprint){publishedAssetFingerprint=fingerprint;return;}
+    if(fingerprint!==publishedAssetFingerprint&&['home','library','achievements','more','progress','draw'].includes(route))location.reload();
+  }catch{}
+  finally{updateCheckRunning=false;}
+}
+checkForAppUpdate();
+setInterval(checkForAppUpdate,15000);
+if('serviceWorker' in navigator&&window.isSecureContext){
+  navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+  navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(registration=>{registration.update().catch(()=>{});setInterval(()=>registration.update().catch(()=>{}),60000);}).catch(()=>toast('O modo offline não ficou disponível. Podes continuar a usar a app.'));
+}
